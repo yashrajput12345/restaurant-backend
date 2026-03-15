@@ -35,9 +35,13 @@ exports.createOrder = async (req, res) => {
         orderStatus: "placed"
       });
 
-      // 🔴 REALTIME ORDER EVENT
+      // ✅ Populate order for realtime
+      const populatedOrder = await Order.findById(order._id)
+        .populate("user", "name email")
+        .populate("items.menuItem");
+
       const io = req.app.get("io");
-      io.emit("newOrder", order);
+      io.emit("newOrder", populatedOrder);
 
       return res.status(201).json({
         orderId: order._id,
@@ -68,9 +72,13 @@ exports.createOrder = async (req, res) => {
       orderStatus: "placed"
     });
 
-    // 🔴 REALTIME ORDER EVENT
+    // ✅ Populate order for realtime
+    const populatedOrder = await Order.findById(order._id)
+      .populate("user", "name email")
+      .populate("items.menuItem");
+
     const io = req.app.get("io");
-    io.emit("newOrder", order);
+    io.emit("newOrder", populatedOrder);
 
     res.status(201).json({
       orderId: order._id,
@@ -134,11 +142,15 @@ exports.updateOrderStatus = async (req, res) => {
     order.orderStatus = status;
     await order.save();
 
-    // 🔴 REALTIME STATUS UPDATE
-    const io = req.app.get("io");
-    io.emit("orderUpdated", order);
+    // ✅ Populate before sending update
+    const populatedOrder = await Order.findById(order._id)
+      .populate("user", "name email")
+      .populate("items.menuItem");
 
-    res.json({ message: "Order status updated", order });
+    const io = req.app.get("io");
+    io.emit("orderUpdated", populatedOrder);
+
+    res.json({ message: "Order status updated", order: populatedOrder });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -165,7 +177,6 @@ exports.stripeWebhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Payment success
   if (event.type === "payment_intent.succeeded") {
     const paymentIntent = event.data.object;
 
@@ -181,7 +192,6 @@ exports.stripeWebhook = async (req, res) => {
     }
   }
 
-  // Payment failed
   if (event.type === "payment_intent.payment_failed") {
     const paymentIntent = event.data.object;
 
