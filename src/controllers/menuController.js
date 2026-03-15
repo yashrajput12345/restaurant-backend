@@ -115,8 +115,6 @@ exports.deleteMenuItem = async (req, res) => {
 exports.updateMenuItem = async (req, res) => {
   try {
 
-    const { name, description, price, category } = req.body;
-
     const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
@@ -125,10 +123,15 @@ exports.updateMenuItem = async (req, res) => {
       });
     }
 
-    item.name = name || item.name;
-    item.description = description || item.description;
-    item.price = price || item.price;
-    item.category = category || item.category;
+    const { name, description, price, category, isAvailable } = req.body;
+
+    if (name !== undefined) item.name = name;
+    if (description !== undefined) item.description = description;
+    if (price !== undefined) item.price = price;
+    if (category !== undefined) item.category = category;
+
+    // ⭐ THIS IS THE IMPORTANT LINE
+    if (isAvailable !== undefined) item.isAvailable = isAvailable;
 
     if (req.file) {
       item.image = req.file.path;
