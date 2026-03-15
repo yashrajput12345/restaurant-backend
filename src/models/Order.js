@@ -7,6 +7,7 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
     items: [
       {
         menuItem: {
@@ -17,24 +18,36 @@ const orderSchema = new mongoose.Schema(
         price: Number,
       },
     ],
+
     totalAmount: {
       type: Number,
       required: true,
     },
+
+    // ⭐ NEW FIELD
+    paymentMethod: {
+      type: String,
+      enum: ["online", "cod"],
+      default: "online",
+    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
+
     orderStatus: {
       type: String,
       enum: ["placed", "preparing", "out_for_delivery", "delivered"],
       default: "placed",
     },
+
     address: {
       type: String,
       required: true,
     },
+
     stripePaymentIntentId: String,
   },
   { timestamps: true }

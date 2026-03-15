@@ -3,12 +3,14 @@ const Stripe = require("stripe");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
+
 // ===============================
-// ✅ CREATE ORDER + PAYMENT INTENT
+// ✅ CREATE ORDER (ONLINE + COD)
 // ===============================
 exports.createOrder = async (req, res) => {
   try {
-    const { items, totalAmount, address } = req.body;
+
+    const { items, totalAmount, address, paymentMethod } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No order items" });
@@ -18,29 +20,53 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Create Stripe Payment Intent
-  const paymentIntent = await stripe.paymentIntents.create({
-  amount: Math.round(totalAmount * 100),
-  currency: "aed",
-  automatic_payment_methods: {
-    enabled: true,
-    allow_redirects: "never"
-  }
-});
+    // ===============================
+    // CASH ON DELIVERY
+    // ===============================
+    if (paymentMethod === "cod") {
 
-    // Save Order in DB
+      const order = await Order.create({
+        user: req.user._id,
+        items,
+        totalAmount,
+        address,
+        paymentMethod: "cod",
+        paymentStatus: "pending",
+        orderStatus: "placed"
+      });
+
+      return res.status(201).json({
+        orderId: order._id,
+        cod: true
+      });
+    }
+
+    // ===============================
+    // ONLINE PAYMENT (STRIPE)
+    // ===============================
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount * 100),
+      currency: "aed",
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: "never"
+      }
+    });
+
     const order = await Order.create({
       user: req.user._id,
       items,
       totalAmount,
       address,
+      paymentMethod: "online",
       stripePaymentIntentId: paymentIntent.id,
       paymentStatus: "pending",
+      orderStatus: "placed"
     });
 
     res.status(201).json({
       orderId: order._id,
-      clientSecret: paymentIntent.client_secret,
+      clientSecret: paymentIntent.client_secret
     });
 
   } catch (error) {
