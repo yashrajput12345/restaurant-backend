@@ -1,24 +1,20 @@
 const MenuItem = require("../models/MenuItem");
 
+
 // ===============================
 // ADD MENU ITEM (ADMIN)
 // ===============================
 exports.createMenuItem = async (req, res) => {
   try {
 
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, isTrending } = req.body;
 
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-
-    // Validate required fields
     if (!name || !price || !category) {
       return res.status(400).json({
         message: "Name, price and category are required"
       });
     }
 
-    // Handle image upload safely
     let image = "";
     if (req.file && req.file.path) {
       image = req.file.path;
@@ -29,7 +25,9 @@ exports.createMenuItem = async (req, res) => {
       description,
       price,
       category,
-      image
+      image,
+      isTrending: isTrending === "true" || isTrending === true,
+      isAvailable: true
     });
 
     const savedItem = await newItem.save();
@@ -80,6 +78,31 @@ exports.getMenuItems = async (req, res) => {
 
 
 // ===============================
+// GET TRENDING ITEMS
+// ===============================
+exports.getTrendingItems = async (req, res) => {
+  try {
+
+    const items = await MenuItem.find({
+      isTrending: true
+    })
+      .populate("category")
+      .sort({ createdAt: -1 });
+
+    res.json(items);
+
+  } catch (error) {
+
+    console.error("TRENDING ITEMS ERROR:", error);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+
+// ===============================
 // DELETE MENU ITEM (ADMIN)
 // ===============================
 exports.deleteMenuItem = async (req, res) => {
@@ -109,6 +132,7 @@ exports.deleteMenuItem = async (req, res) => {
   }
 };
 
+
 // ===============================
 // UPDATE MENU ITEM (ADMIN)
 // ===============================
@@ -123,15 +147,27 @@ exports.updateMenuItem = async (req, res) => {
       });
     }
 
-    const { name, description, price, category, isAvailable } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+      isAvailable,
+      isTrending
+    } = req.body;
 
     if (name !== undefined) item.name = name;
     if (description !== undefined) item.description = description;
     if (price !== undefined) item.price = price;
     if (category !== undefined) item.category = category;
 
-    // ⭐ THIS IS THE IMPORTANT LINE
-    if (isAvailable !== undefined) item.isAvailable = isAvailable;
+    if (isAvailable !== undefined) {
+      item.isAvailable = isAvailable === "true" || isAvailable === true;
+    }
+
+    if (isTrending !== undefined) {
+      item.isTrending = isTrending === "true" || isTrending === true;
+    }
 
     if (req.file) {
       item.image = req.file.path;

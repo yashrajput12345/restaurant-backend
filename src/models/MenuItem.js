@@ -6,21 +6,38 @@ const menuItemSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    description: String,
+
+    description: {
+      type: String
+    },
+
     price: {
       type: Number,
       required: true,
     },
-    image: String,
+
+    image: {
+      type: String
+    },
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
     },
+
+    // Item availability
     isAvailable: {
       type: Boolean,
       default: true,
+    },
+
+    // ⭐ Trending flag
+    isTrending: {
+      type: Boolean,
+      default: false
     }
+
   },
   { timestamps: true }
 );
