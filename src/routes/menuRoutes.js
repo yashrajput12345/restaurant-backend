@@ -10,8 +10,10 @@ const {
 const { protect, admin } =
   require("../middleware/authMiddleware");
 
+const upload = require("../middleware/upload");
+
 router.route("/")
-  .post(protect, admin, createMenuItem)
+  .post(protect, admin, upload.single("image"), createMenuItem)
   .get(getMenuItems);
 
 router.route("/:id")
