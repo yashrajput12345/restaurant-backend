@@ -4,7 +4,8 @@ const router = express.Router();
 const {
   createMenuItem,
   getMenuItems,
-  deleteMenuItem
+  deleteMenuItem,
+  updateMenuItem
 } = require("../controllers/menuController");
 
 const { protect, admin } =
@@ -17,6 +18,7 @@ router.route("/")
   .get(getMenuItems);
 
 router.route("/:id")
+  .put(protect, admin, upload.single("image"), updateMenuItem)
   .delete(protect, admin, deleteMenuItem);
 
 module.exports = router;

@@ -100,3 +100,42 @@ exports.deleteMenuItem = async (req, res) => {
     });
   }
 };
+
+// ===============================
+// UPDATE MENU ITEM (ADMIN)
+// ===============================
+exports.updateMenuItem = async (req, res) => {
+  try {
+
+    const { name, description, price, category } = req.body;
+
+    const item = await MenuItem.findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({
+        message: "Menu item not found"
+      });
+    }
+
+    item.name = name || item.name;
+    item.description = description || item.description;
+    item.price = price || item.price;
+    item.category = category || item.category;
+
+    if (req.file) {
+      item.image = req.file.path;
+    }
+
+    const updatedItem = await item.save();
+
+    res.json(updatedItem);
+
+  } catch (error) {
+
+    console.error("UPDATE MENU ERROR:", error);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
