@@ -19,3 +19,20 @@ exports.getMenuItems = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Delete Menu Item (Admin)
+exports.deleteMenuItem = async (req, res) => {
+  try {
+
+    const item = await MenuItem.findByIdAndDelete(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    res.json({ message: "Menu item deleted" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
