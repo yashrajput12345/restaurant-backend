@@ -49,12 +49,20 @@ exports.createMenuItem = async (req, res) => {
 
 
 // ===============================
-// GET ALL MENU ITEMS
+// GET MENU ITEMS (OPTIONAL CATEGORY FILTER)
 // ===============================
 exports.getMenuItems = async (req, res) => {
   try {
 
-    const items = await MenuItem.find()
+    const { category } = req.query;
+
+    let filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const items = await MenuItem.find(filter)
       .populate("category")
       .sort({ createdAt: -1 });
 
@@ -62,7 +70,7 @@ exports.getMenuItems = async (req, res) => {
 
   } catch (error) {
 
-    console.error("GET MENU ERROR:", error);
+    console.error("Get Menu Items Error:", error);
 
     res.status(500).json({
       message: error.message
