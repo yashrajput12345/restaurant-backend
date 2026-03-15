@@ -1,6 +1,9 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const connectDB = require("./src/config/db");
 
 const authRoutes = require("./src/routes/authRoutes");
@@ -10,6 +13,24 @@ const orderRoutes = require("./src/routes/orderRoutes");
 const { stripeWebhook } = require("./src/controllers/orderController");
 
 const app = express();
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Create Socket.IO server
+const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+});
+
+// Make io available everywhere
+app.set("io", io);
+
+// When admin connects
+io.on("connection", (socket) => {
+  console.log("Admin connected:", socket.id);
+});
 
 // Connect Database
 connectDB();
@@ -33,6 +54,7 @@ NORMAL MIDDLEWARES
 app.use(cors({
   origin: "*"
 }));
+
 app.use(express.json());
 
 /*
@@ -52,6 +74,7 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () =>
+// Start server
+server.listen(PORT, () =>
   console.log(`Server running on port ${PORT}`)
 );

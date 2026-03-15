@@ -35,6 +35,10 @@ exports.createOrder = async (req, res) => {
         orderStatus: "placed"
       });
 
+      // 🔴 REALTIME ORDER EVENT
+      const io = req.app.get("io");
+      io.emit("newOrder", order);
+
       return res.status(201).json({
         orderId: order._id,
         cod: true
@@ -64,6 +68,10 @@ exports.createOrder = async (req, res) => {
       orderStatus: "placed"
     });
 
+    // 🔴 REALTIME ORDER EVENT
+    const io = req.app.get("io");
+    io.emit("newOrder", order);
+
     res.status(201).json({
       orderId: order._id,
       clientSecret: paymentIntent.client_secret
@@ -74,6 +82,7 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // ===============================
 // ✅ GET USER ORDERS
@@ -89,6 +98,7 @@ exports.getUserOrders = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // ===============================
 // ✅ GET ALL ORDERS (ADMIN)
@@ -106,11 +116,13 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
+
 // ===============================
 // ✅ UPDATE ORDER STATUS (ADMIN)
 // ===============================
 exports.updateOrderStatus = async (req, res) => {
   try {
+
     const { status } = req.body;
 
     const order = await Order.findById(req.params.id);
@@ -121,6 +133,10 @@ exports.updateOrderStatus = async (req, res) => {
 
     order.orderStatus = status;
     await order.save();
+
+    // 🔴 REALTIME STATUS UPDATE
+    const io = req.app.get("io");
+    io.emit("orderUpdated", order);
 
     res.json({ message: "Order status updated", order });
 
@@ -140,7 +156,7 @@ exports.stripeWebhook = async (req, res) => {
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body, // raw body required
+      req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
@@ -149,7 +165,7 @@ exports.stripeWebhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle successful payment
+  // Payment success
   if (event.type === "payment_intent.succeeded") {
     const paymentIntent = event.data.object;
 
@@ -165,7 +181,7 @@ exports.stripeWebhook = async (req, res) => {
     }
   }
 
-  // Handle failed payment
+  // Payment failed
   if (event.type === "payment_intent.payment_failed") {
     const paymentIntent = event.data.object;
 
