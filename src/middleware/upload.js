@@ -4,9 +4,12 @@ const cloudinary = require("../config/cloudinary");
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "restaurant-menu",
-    allowed_formats: ["jpg", "png", "jpeg"]
+  params: async (req, file) => {
+    return {
+      folder: "restaurant-menu",
+      allowed_formats: ["jpg", "png", "jpeg", "webp"],
+      public_id: Date.now() + "-" + file.originalname
+    };
   }
 });
 
