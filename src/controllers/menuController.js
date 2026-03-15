@@ -8,8 +8,18 @@ exports.createMenuItem = async (req, res) => {
 
     const { name, description, price, category } = req.body;
 
-    // image uploaded to cloudinary
-    const image = req.file ? req.file.path : "";
+    // Validate required fields
+    if (!name || !price || !category) {
+      return res.status(400).json({
+        message: "Name, price and category are required"
+      });
+    }
+
+    // If image uploaded
+    let image = "";
+    if (req.file) {
+      image = req.file.path;
+    }
 
     const item = await MenuItem.create({
       name,
@@ -22,7 +32,11 @@ exports.createMenuItem = async (req, res) => {
     res.status(201).json(item);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Create Menu Item Error:", error);
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 
@@ -40,7 +54,12 @@ exports.getMenuItems = async (req, res) => {
     res.json(items);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    console.error("Get Menu Items Error:", error);
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 
@@ -64,6 +83,11 @@ exports.deleteMenuItem = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    console.error("Delete Menu Item Error:", error);
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
