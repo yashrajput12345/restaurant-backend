@@ -8,6 +8,9 @@ exports.createMenuItem = async (req, res) => {
 
     const { name, description, price, category } = req.body;
 
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
     // Validate required fields
     if (!name || !price || !category) {
       return res.status(400).json({
@@ -15,13 +18,13 @@ exports.createMenuItem = async (req, res) => {
       });
     }
 
-    // If image uploaded
+    // Handle image upload safely
     let image = "";
-    if (req.file) {
+    if (req.file && req.file.path) {
       image = req.file.path;
     }
 
-    const item = await MenuItem.create({
+    const newItem = new MenuItem({
       name,
       description,
       price,
@@ -29,13 +32,17 @@ exports.createMenuItem = async (req, res) => {
       image
     });
 
-    res.status(201).json(item);
+    const savedItem = await newItem.save();
+
+    res.status(201).json(savedItem);
 
   } catch (error) {
-    console.error("Create Menu Item Error:", error);
+
+    console.error("MENU CREATE ERROR:", error);
 
     res.status(500).json({
-      message: error.message
+      message: "Failed to create menu item",
+      error: error.message
     });
   }
 };
@@ -55,7 +62,7 @@ exports.getMenuItems = async (req, res) => {
 
   } catch (error) {
 
-    console.error("Get Menu Items Error:", error);
+    console.error("GET MENU ERROR:", error);
 
     res.status(500).json({
       message: error.message
@@ -70,21 +77,23 @@ exports.getMenuItems = async (req, res) => {
 exports.deleteMenuItem = async (req, res) => {
   try {
 
-    const item = await MenuItem.findByIdAndDelete(req.params.id);
+    const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({
-        message: "Item not found"
+        message: "Menu item not found"
       });
     }
 
+    await item.deleteOne();
+
     res.json({
-      message: "Menu item deleted"
+      message: "Menu item deleted successfully"
     });
 
   } catch (error) {
 
-    console.error("Delete Menu Item Error:", error);
+    console.error("DELETE MENU ERROR:", error);
 
     res.status(500).json({
       message: error.message
